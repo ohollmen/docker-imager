@@ -1,0 +1,27 @@
+{
+  "name": "docker-imager",
+  "version": "1.0.0",
+  "description": "Generate Dockerfiles based on JSON config.",
+  "main": "dfgen.js",
+  "dependencies": {
+    "mustache": "~3.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ohollmen/docker-imager.git"
+  },
+  "keywords": [
+    "docker",
+    "dockerfile",
+    "linux"
+  ],
+  "author": "Olli Hollmen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ohollmen/docker-imager/issues"
+  },
+  "homepage": "https://github.com/ohollmen/docker-imager#readme"
+}

@@ -1,0 +1,95 @@
+# docker-imager - Create Dockerfile in a structured way.
+
+docker-imager uses a JSON config file and template to generate Dockerfile contents.
+it is used to keep docker recipe in organized data format to (e.g.) keep recipes in document
+oriented no-sql database, where recipes could be queried, compared, extracted statistics on.
+
+Extracting this info from Dockerfile (by parsing it) would be tedious.
+
+Also the OS packagelist gets often so long that it would be hard screening list for duplicates, etc.
+Having everything in JSON would allow you programmatically detecting dups, transfer info from JSON to no-sql database, etc.
+
+Example JSON Config for generating a Dockerfile with docker-imager:
+
+    {
+      "author":"Olli Hollmen",
+      "desc":  "Ubuntu 18 Slim Image relying on -v /usr:/usr (/usr on host)",
+      "plist": ["wget"],
+      "baseimage": "ubuntu:18.04",
+      "image": "ubu18_slim",
+      "dockerfname": "Dockerfile.ubu",
+      "remote": "images.artifactory.mycorp.com/web-team/",
+      "uidgid": [1021, 1021],
+      "vertag": "0.0.1",
+      "pkgtype":"deb",
+      "extpkgs": [],
+      "mkdir": [],
+      "links": [],
+      "tmplfname": "./Dockerfile.mustache"
+    }
+
+# Features
+
+`docker-imager` Enables:
+
+- Maintaining build params like baseimage, target image name, version tag
+- Maintaing a list of external add-on packages (or particular file types) from
+  ftp or http(s) sites in *.rpm, *.tgz, *.so ... formats
+- Creating directories and symlinks inside image during build
+- Maintaining superficial image meta info (author, description)
+- Maintaining list of OS packages (apt, yum, ...) to add to image in config embedded array (for short package lists) or external (second level config) JSON file (for *long* package lists)
+- Creating docker build process and image testing flow related commands (in documenting section)
+  in Dockerfile (docker build ..., docker run ..., docker tag ..., docker push ...)
+- Maintaining hints on the user/group the image is intended to run as
+- Configuring the Dockerfile template to base Dockerfile generation on
+- Registering the package management style (e.g. 'rpm' or 'deb') the OS distro uses to allow Dockerfile template be highly parametrized, yet uniform (allows working with smaller amount of templates)
+
+`docker-imager` Does not:
+
+- Run the Build, but solely focuses on generating a Dockerfile
+- Support multi-stage builds
+- Does not support multi-image or service clustering features (use docker-compose for that)
+- Configure build context directory ('.' assumed for simplicity in generated commands)
+
+# Running CLI Utility
+
+At this point the config file is the only CL parameter. The whole Dockerfile generation process is driven by it.
+
+    # Pass JSON config file
+    ./dfgen myimage.conf.json
+
+# Config members in JSON
+
+- Various names, versions
+  - **baseimage** - baseimage name (as listed on on [dockerhub](https://hub.docker.com/) )
+  - **image** - image name to use for docker `-t` parameter as build command is documented
+    in Dockerfile
+  - **vertag** - Version tag for image being created (e.g. `"1.0.1"`)
+  - **dockerfname** - Dockerfile custom naming (e.g. `"Dockerfile.ubu18"`. defaults plainly to Dockerfile) in case Dockerfiles for multiple images are created in same directory.
+  - **remote** - Remote repository server URL (with optional sub-path components, but *no* image name components) for image push (e.g. "dockerimages.mycom.com/webservimg/")
+- Hints for docker runtime context
+  - **uidgid** - Array of (2 items) uidnumber and gidnumber to run the image as
+- Meta information (options)
+  - **author** - Author info (name / email)
+  - **desc** - Description of image usage / purpose (... image for ...)
+- OS software (and other) packages
+  - **plist** - Packagelist as Array of OS package names for the OS docker image is
+    being built for
+  - **plfname** - Package list filename for long package lists where maiintaining plist in JSON is no more practicat. This is (meant to be) mutually exclusive with plist. plfname is however overriden by (preferred ove) plist if both exist in config.
+- Extra / Add-on packages from "wild" sources
+  - **extpkgs** - allows describing http(s) or ftp URL:s to load extra / add-on packages from (outside OS package repos) in various formats. See separate section on this.
+  - Note: Formats supported: *.rpm, *tgz
+- Symlinks and Directories
+  - **mkdir** - List of directory names to be created inside docker image
+  - **links** - an Array of 2-path-string arrays where 2-path-string arrays contain the source and destination of symlink in same order as `ln -s ..` shell command 
+or symlink() system command
+
+Additional info:
+- The package list originated from plist or plfname is formatted into reasonable size lines with
+  line continuum charaters at line ends so that Dockerfile remains in human readable form.
+- extpkgs, mkdir, symlink related custom ops are fully optional (as seen from simple example config)
+
+# TODO
+
+- Explain in which order the operations described in config are performed and how template has a crucial role on this
+
