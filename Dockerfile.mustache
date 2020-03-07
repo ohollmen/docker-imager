@@ -27,8 +27,9 @@ RUN zypper install  {{ pl }}
 # RHEL/Centos devtoolset (*must* install *after* main packages)
 RUN yum install -y devtoolset-3
 {{/_uses_rpm }}
-
-# Create syLinks ?
+# Create Dirs (RUN mkdir ...) ?
+{{{ mkdircont }}}
+# Create symlinks (RUN ln -s ...) ?
 {{{ linkcont }}}
 
 # Use Addition (?) -G sudo
