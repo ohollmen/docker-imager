@@ -159,9 +159,12 @@ function pkg_makelinks(p) {
 function pkg_mkdirs(p) {
   p.mkdircont = "";
   if (!p.mkdir) {  console.error("No dirs to create"); return; }
+  if (!p.mkdir.length) { return; }
+  p.mkdircont += "RUN mkdir";
   p.mkdir.forEach(function (it) {
-    p.mkdircont += "RUN mkdir " + it;
+      p.mkdircont += " "+it;
   });
+  p.mkdircont += "\n";
 }
 
 function run_container(p) {

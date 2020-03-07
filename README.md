@@ -9,11 +9,15 @@ Extracting this info from Dockerfile (by parsing it) would be tedious.
 Also the OS packagelist gets often so long that it would be hard screening list for duplicates, etc.
 Having everything in JSON would allow you programmatically detecting packagelist duplicate items, transfer info from JSON to no-sql database, etc.
 
+Dockerfile generator also optimizes the Dockerfile output to produce minimum amount of layers and
+example template file gives a good hint on the suggested order of operations to again optimize
+docker layer reuse.
+
 Example JSON Config for generating a Dockerfile with docker-imager:
 
     {
       "author":"Olli Hollmen",
-      "desc":  "Ubuntu 18 Slim Image relying on -v /usr:/usr (/usr on host)",
+      "desc":  "Ubuntu 18 Slim Image relying on smart host volume mounts (e.g. /usr on host)",
       "plist": ["wget"],
       "baseimage": "ubuntu:18.04",
       "image": "ubu18_slim",
