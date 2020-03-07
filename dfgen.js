@@ -1,27 +1,32 @@
 #!/usr/bin/node
-// Generate based on pkglist
-// npm install mustache
-// TODO: Move to Handlebars for comparison in tmpl ?
+/** @file
+* Generate Dockerfile based on JSON Config
+* Dependency: npm install mustache
+* TODO:
+* - Move to Handlebars for comparison in tmpl ?
+* - Use sub commands (to trigger building, testing ...)
+*/
 "use strict;";
 var Mustache = require("mustache");
-var fs = require("fs");
+var fs    = require("fs");
 var cproc = require("child_process");
-var path = require("path");
+var path  = require("path");
 //////////////////////////////////////
-    
-// var dft = "./Dockerfile.mustache";
+
 // extpkg temp dir inside the image.
 var pkgtemp = "/tmp";
     
-var cfgname = process.argv[2]; // "./centos7_fwb.conf.json";
-if (!cfgname) { console.error("Need config file as first param !"); process.exit(1); }
+var cfgname = process.argv[2];
+if (!cfgname) { usage("Need config file as first param !"); }
 var p = require(cfgname);
-      
+if (!p) { usage("JSON Config loading failed !"); }
 var dft = p.tmplfname;
-if (!dft) { console.error("No template file given in config"); process.exit(1); }
+if (!dft) { usage("No template file given in config"); }
 var tcont = fs.readFileSync(dft, 'utf8');
+if (!tcont) { usage("No template content loaded from: '"+dft+"'"); }
 init(p);
 pkg_listgen(p);
+pkg_mkdirs(p); // Early, before extpkg and links
 extpkg_inst(p);
 pkg_makelinks(p);
 // DEBUG
@@ -30,20 +35,25 @@ pkg_makelinks(p);
 var cont = Mustache.render(tcont, p);
 console.log(cont);
 process.exit(0);
-    
+function usage(msg) {
+  if (msg) { console.error(msg); }
+  console.error("Usage: "+process.argv[1] + " my_image_001.conf.json");
+  process.exit(1);
+}
 function init(p) {
-  var pkgtypes = ["rpm","deb","ddd"];
+  var pkgtypes = ["rpm","deb","zyp"];
   pkgtypes.forEach(function (pt) {
     if (p.pkgtype == pt) { p["_uses_"+pt] = true; }
   });
   p.dockerfname = p.dockerfname || 'Dockerfile';
 }
 
-// process "extpkgs" section of config.
-// Add generated dockerFile content to extpkgs node parameters.
-// Note: We are excessivele cautious here and exit on problems. TODO: Strip this ...
-// TODO: Document details of various accepted extpkg types: .tgz
-// Note:
+/** process "extpkgs" section of config.
+* Add generated dockerFile content to extpkgs node parameters.
+* Note: We are excessively cautious here and exit on problems. TODO: Strip this ...
+* TODO: Document details of various accepted extpkg types: .tgz
+* Note:
+*/
 function extpkg_inst(p) {
   var pkgs = p.extpkgs;
   if (!pkgs) { console.error("No packages to install\n"); return; }
@@ -130,7 +140,11 @@ function pkg_listgen(p) {
   // cont;
 }
 
-// Make symlinks
+/* Make symlinks describe in "links" section of config.
+* Place generated RUN-commands into "linkcont" section of config object.
+* @param p {object} - Docker config data
+* Return Nothing.
+*/
 function pkg_makelinks(p) {
   p.linkcont = "";
   if (!p.links) {  console.error("No links to create"); return; }
@@ -140,4 +154,17 @@ function pkg_makelinks(p) {
     // console.error("DEBUG: "+lcmd);
     p.linkcont += "RUN " + lcmd;
   });
+}
+
+function pkg_mkdirs(p) {
+  p.mkdircont = "";
+  if (!p.mkdir) {  console.error("No dirs to create"); return; }
+  p.mkdir.forEach(function (it) {
+    p.mkdircont += "RUN mkdir " + it;
+  });
+}
+
+function run_container(p) {
+  // Use templating ?
+  var runcmd = "";
 }

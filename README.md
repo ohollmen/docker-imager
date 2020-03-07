@@ -7,7 +7,7 @@ oriented no-sql database, where recipes could be queried, compared, extracted st
 Extracting this info from Dockerfile (by parsing it) would be tedious.
 
 Also the OS packagelist gets often so long that it would be hard screening list for duplicates, etc.
-Having everything in JSON would allow you programmatically detecting dups, transfer info from JSON to no-sql database, etc.
+Having everything in JSON would allow you programmatically detecting packagelist duplicate items, transfer info from JSON to no-sql database, etc.
 
 Example JSON Config for generating a Dockerfile with docker-imager:
 
@@ -76,9 +76,13 @@ At this point the config file is the only CL parameter. The whole Dockerfile gen
   - **plist** - Packagelist as Array of OS package names for the OS docker image is
     being built for
   - **plfname** - Package list filename for long package lists where maiintaining plist in JSON is no more practicat. This is (meant to be) mutually exclusive with plist. plfname is however overriden by (preferred ove) plist if both exist in config.
+  - **pkgtype** - Package *and* Package manager type (this affects commands used, do not use rpm for SUSE)
+    - "deb" for Debian/Ubuntu
+    - "rpm" for RHEL/Centos
+    - "zyp" for SLES/OpenSuse
 - Extra / Add-on packages from "wild" sources
   - **extpkgs** - allows describing http(s) or ftp URL:s to load extra / add-on packages from (outside OS package repos) in various formats. See separate section on this.
-  - Note: Formats supported: *.rpm, *tgz
+  - Note: Formats supported: *.rpm, *tgz. These packages must "align" and be fit for installation on particular OS base image
 - Symlinks and Directories
   - **mkdir** - List of directory names to be created inside docker image
   - **links** - an Array of 2-path-string arrays where 2-path-string arrays contain the source and destination of symlink in same order as `ln -s ..` shell command 
@@ -92,4 +96,15 @@ Additional info:
 # TODO
 
 - Explain in which order the operations described in config are performed and how template has a crucial role on this
+
+# Special Notes
+
+## Symlinks to main executable and NODE_PATH
+
+It seems that Node.js resolves the path of executable on very low (non-abstract) level, for example symlink is resolved to "concrete file" executable and
+that is considered to be the base path relative to which all library and JSON loadings by Node.js require("...") function is done relative to.
+To overcome this nastily unintuitive quirk, set `export NODE_PATH=.` to (also) load libs relative to current libs (e.g. docker-imager config files).
+
+# References
+- https://software.opensuse.org/package/
 

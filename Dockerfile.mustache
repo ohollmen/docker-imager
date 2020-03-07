@@ -1,0 +1,48 @@
+# Build by: docker build --rm=true -t '{{ image }}:{{ vertag }}' -f {{ dockerfname }} .
+# (last: contextdir/)
+# Run by: docker run --rm=true -i -t '{{ image }}:{{ vertag }}' bash
+# Remember to create local and remote tags (before push to {{{ remote }}}/{{ image }}:{{ vertag }} )
+# Use -d for backgrounding (daemon). -P for publish
+FROM {{ baseimage }}
+LABEL maintainer="{{{ author }}}" description="{{{ desc }}}"
+
+# Package Installations
+{{#_uses_deb}}
+RUN apt-get update && apt-get install -y --no-install-recommends {{ pl }}
+{{/_uses_deb}}
+{{#_uses_rpm}}
+RUN yum update -y && yum install -y {{ pl }}
+{{/_uses_rpm}}
+{{#_uses_zyp}}
+RUN zypper install  {{ pl }}
+{{/_uses_zyp}}
+# ENV MYUTIL_VER=1.0
+# External / Thisrd party raw packages ?
+{{#extpkgs}}
+# {{{ url }}}
+{{{ cont }}}
+{{/extpkgs}}
+
+{{#_uses_rpm }}
+# RHEL/Centos devtoolset (*must* install *after* main packages)
+RUN yum install -y devtoolset-3
+{{/_uses_rpm }}
+
+# Create syLinks ?
+{{{ linkcont }}}
+
+# Use Addition (?) -G sudo
+# RUN useradd -c "The User" -d /home/1000 -m -s /bin/bash 1000
+#USER {{ uidgid[0] }}:{{ uidgid[1] }}
+# Cwd for RUN, CMD, ENTRYPOINT, COPY and ADD (to follow)
+#WORKDIR /foo
+# Expose ports (See also mapping by: docker run -p Psrc:Pdest)
+#EXPOSE 8
+#EXPOSE 300
+
+# apt-get clean
+
+# Default Main command (when no command is passed with docker run)
+# Note if ENTRYPOINT is in exec form, CMD (in exec form) becomes
+# (add'l) params to ENTRYPOINT command.
+CMD bash
