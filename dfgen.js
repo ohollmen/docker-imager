@@ -1,10 +1,31 @@
 #!/usr/bin/node
 /** @file
-* Generate Dockerfile based on JSON Config
-* Dependency: npm install mustache
-* TODO:
-* - Move to Handlebars for comparison in tmpl ?
-* - Use sub commands (to trigger building, testing ...)
+* 
+* # docker-imager
+* 
+* Generate Dockerfile based on Docker Compositions Config in a JSON file.
+* Applicable for single-container setting. Consider using `docker-compose`
+* for a multi-service setting.
+* 
+* Single dependency: `npm install mustache`
+* 
+* ## Templating - How it Internally Works
+* 
+* Templating will get the original config object as parameter.
+* During processing additional members are added to config object
+* (Usually with "...cont" name suffix for "Dockerfile content".
+* In some cases like `extpkgs` (array) member, content is generated
+* into each of its nodes and `extpkgs` member has to be looped / iterated
+* on the (mustache) template: `{{#extpkgs}}\n{{{ cont }}}\n{{/extpkgs}}`.
+*
+* ## Higher Level Documentation
+*
+* Refer to README.md for higher level (command line) usage.
+* 
+* ## TODO
+* 
+* - Move to Handlebars for comparison in tmpl ? Does not help much.
+* - Use sub commands (to trigger building, testing ...). Good move.
 */
 "use strict;";
 var Mustache = require("mustache");
@@ -15,43 +36,53 @@ var path  = require("path");
 
 // extpkg temp dir inside the image.
 var pkgtemp = "/tmp";
-    
+
+// var op = process.argv
 var cfgname = process.argv[2];
+
 if (!cfgname) { usage("Need config file as first param !"); }
-var p = require(cfgname);
+var p = require_json(cfgname);
 if (!p) { usage("JSON Config loading failed !"); }
 var dft = p.tmplfname;
 if (!dft) { usage("No template file given in config"); }
 var tcont = fs.readFileSync(dft, 'utf8');
 if (!tcont) { usage("No template content loaded from: '"+dft+"'"); }
 init(p);
+
 pkg_listgen(p);
 pkg_mkdirs(p); // Early, before extpkg and links
 extpkg_inst(p);
 pkg_makelinks(p);
+if (p.env) {
+  p.envcont = "";
+  Object.keys(p.env).forEach(function (k) { p.envcont = "ENV "+ k + "="+p.env[k] + "\n";});
+}
 // DEBUG
 // console.error(p);
 // Create DockerFile (stdout)
 var cont = Mustache.render(tcont, p);
 console.log(cont);
 process.exit(0);
+
 function usage(msg) {
   if (msg) { console.error(msg); }
   console.error("Usage: "+process.argv[1] + " my_image_001.conf.json");
   process.exit(1);
 }
+/** Initialize a few good default setting (to params in p) */
 function init(p) {
   var pkgtypes = ["rpm","deb","zyp"];
+  // helpers to use in template as mustache is lacking comparision (equality) operator.
   pkgtypes.forEach(function (pt) {
     if (p.pkgtype == pt) { p["_uses_"+pt] = true; }
   });
   p.dockerfname = p.dockerfname || 'Dockerfile';
 }
 
-/** process "extpkgs" section of config.
-* Add generated dockerFile content to extpkgs node parameters.
-* Note: We are excessively cautious here and exit on problems. TODO: Strip this ...
-* TODO: Document details of various accepted extpkg types: .tgz
+/** Process "extpkgs" section of config.
+* Add generated Dockerfile content to extpkgs node parameters (member "cont").
+* @param p {object} - Image parameters
+* @todo Document details of various accepted extpkg types: .tgz
 * Note:
 */
 function extpkg_inst(p) {
@@ -112,21 +143,23 @@ function extpkg_inst(p) {
 
 /** Load Package list gotten from JSON main config.
 * Uses members from config (param p):
-* - config.plfname to load package list (array of string form package names)
+* - config.plfname to load package list (array of string form package names) embedded directly to config.
 * - config.ppl - "packages per line" to neatly distribute the large
 *   package lists onto multiple lines.
-* Places contet for templating to "pl" (for "package list").
+* Places content for templating to "pl" (for "package list").
 * @param p {object} - Docker config data
 * @return Nothing.
 */
 function pkg_listgen(p) {
   var pkgs = [];
   if (!p.plfname) {
+    // Embedded list of packages in Array
     if (p.plist && Array.isArray(p.plist)) { pkgs = p.plist; }
     else { onsole.error("Warning: Neither package list (JSON) file or config embedded pkg list were give (untypical) !"); return; }
   }
+  // External (second level) JSON file
   else {
-    pkgs = require(p.plfname);
+    pkgs = require_json(p.plfname);
   }
   // Package list
   var scnt = p.ppl || 10; // pkg items per line.
@@ -140,10 +173,10 @@ function pkg_listgen(p) {
   // cont;
 }
 
-/* Make symlinks describe in "links" section of config.
+/** Make symlinks described in "links" section of config.
 * Place generated RUN-commands into "linkcont" section of config object.
 * @param p {object} - Docker config data
-* Return Nothing.
+* @return Nothing.
 */
 function pkg_makelinks(p) {
   p.linkcont = "";
@@ -155,7 +188,13 @@ function pkg_makelinks(p) {
     p.linkcont += "RUN " + lcmd;
   });
 }
-
+/** Create directories (fairly early) in the processing.
+* Docker directives are generated to member "mkdircont"
+* As this *only* generated commands for template, it's templates responsibility
+* to expand the "mkdircont" early in the template.
+* @param p {object} - Docker config data
+* @return Nothing.
+*/
 function pkg_mkdirs(p) {
   p.mkdircont = "";
   if (!p.mkdir) {  console.error("No dirs to create"); return; }
@@ -170,4 +209,16 @@ function pkg_mkdirs(p) {
 function run_container(p) {
   // Use templating ?
   var runcmd = "";
+}
+/** Wrapper for loading JSON w/o path resolution quirks.
+* require() loads JSON, but with unintuitive twists regarding symlinks
+* to executable or location of executable in general vs.
+* current directory of process. Replace require() with require_json()
+to get this behavior. Note: This is not a general purpose replacement
+for require(), but only for loading *.json files.
+@param fname - JSON filename
+*/
+function require_json(fname) {
+  var cont = fs.readFileSync(fname, 'utf8');
+  return JSON.parse(cont);
 }

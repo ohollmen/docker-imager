@@ -55,12 +55,21 @@ Example JSON Config for generating a Dockerfile with docker-imager:
 - Does not support multi-image or service clustering features (use docker-compose for that)
 - Configure build context directory ('.' assumed for simplicity in generated commands)
 
-# Running CLI Utility
+# Installing and Running CLI Utility
 
-At this point the config file is the only CL parameter. The whole Dockerfile generation process is driven by it.
+Install docker-imager utility:
 
+    # Install docker-imager by npm or yarn (yarn add ...)
+    npm install docker-imager
+    # For ease of use, create a symlink to dfgen.js
+    ln -s docker-imager/dfgen.js dfgen.js
+    
+At this point (of the tool evolution) the config file is the only CL parameter. The whole Dockerfile generation process is driven by it.
+
+    # Add current dir in path (to resolve .json file loading correctly)
+    export NODE_PATH=.
     # Pass JSON config file
-    ./dfgen myimage.conf.json
+    ./dfgen.js myimage.conf.json
 
 # Config members in JSON
 
@@ -96,6 +105,9 @@ Additional info:
 - The package list originated from plist or plfname is formatted into reasonable size lines with
   line continuum charaters at line ends so that Dockerfile remains in human readable form.
 - extpkgs, mkdir, symlink related custom ops are fully optional (as seen from simple example config)
+- OpenSUSE and `pkgtype=zyp` allow embedding full URL:s as package name item
+
+# `extpkgs` - Section
 
 # TODO
 
@@ -111,4 +123,7 @@ To overcome this nastily unintuitive quirk, set `export NODE_PATH=.` to (also) l
 
 # References
 - https://software.opensuse.org/package/
+- https://unix.stackexchange.com/questions/82016/how-to-use-zypper-in-bash-scripts-for-someone-coming-from-apt-get
+- https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image Preventing interactivity and hang on docker build apt install
+- https://daten-und-bass.io/blog/fixing-missing-locale-setting-in-ubuntu-docker-image/ Installing and setting locales for Ununtu 18
 
