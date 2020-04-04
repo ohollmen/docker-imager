@@ -126,4 +126,6 @@ To overcome this nastily unintuitive quirk, set `export NODE_PATH=.` to (also) l
 - https://unix.stackexchange.com/questions/82016/how-to-use-zypper-in-bash-scripts-for-someone-coming-from-apt-get
 - https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image Preventing interactivity and hang on docker build apt install
 - https://daten-und-bass.io/blog/fixing-missing-locale-setting-in-ubuntu-docker-image/ Installing and setting locales for Ununtu 18
+- https://stackoverflow.com/questions/28405902/how-to-set-the-locale-inside-a-debian-ubuntu-docker-container/38553499#38553499
+- https://wiki.yoctoproject.org/wiki/TipsAndTricks/ResolvingLocaleIssues
 

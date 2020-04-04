@@ -37,7 +37,14 @@ RUN yum install -y devtoolset-3
 
 # Env. Additions ?
 {{{ envcont }}}
-
+{{#_uses_deb}}
+# Ubuntu/Debian hacks for locales
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+# en_US.UTF-8 not needed ? Or above not needed if passed ?
+# Interactive alt to this woule be `dpkg-reconfigure locales`
+RUN locale-gen en_US.UTF-8
+RUN update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+{{/_uses_deb}}
 # Use Addition (?) -G sudo
 # RUN useradd -c "The User" -d /home/1000 -m -s /bin/bash 1000
 #USER {{ uidgid[0] }}:{{ uidgid[1] }}
