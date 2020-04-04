@@ -38,6 +38,13 @@ var path  = require("path");
 var pkgtemp = "/tmp";
 
 // var op = process.argv
+
+var ops = {"gen": generate};
+var op = process.argv.splice(2,1).toString();
+if (!op) { usage("No op. passed\n"); }
+// console.log("OP:" + op);
+if (!ops[op]) { usage("'"+op+"' - No such op.\n"); }
+
 var cfgname = process.argv[2];
 
 if (!cfgname) { usage("Need config file as first param !"); }
@@ -48,25 +55,34 @@ if (!dft) { usage("No template file given in config"); }
 var tcont = fs.readFileSync(dft, 'utf8');
 if (!tcont) { usage("No template content loaded from: '"+dft+"'"); }
 init(p);
-
-pkg_listgen(p);
-pkg_mkdirs(p); // Early, before extpkg and links
-extpkg_inst(p);
-pkg_makelinks(p);
-if (p.env) {
-  p.envcont = "";
-  Object.keys(p.env).forEach(function (k) { p.envcont += "ENV "+ k + "="+p.env[k] + "\n";});
-}
-// DEBUG
-// console.error(p);
-// Create DockerFile (stdout)
-var cont = Mustache.render(tcont, p);
-console.log(cont);
+// Dispatch
+ops[op](p);
 process.exit(0);
+
+function generate(p) {
+  pkg_listgen(p);
+  pkg_mkdirs(p); // Early, before extpkg and links
+  extpkg_inst(p);
+  pkg_makelinks(p);
+  if (p.env) {
+    p.envcont = "ENV "; // TODO: "ENV " ... k1=v1 k2=v2
+    earr = [];
+    Object.keys(p.env).forEach(function (k) { earr.push(k + "="+p.env[k]); }); //  p.envcont += "ENV "+ k + "="+p.env[k] + "\n";
+    p.envcont += earr.join(' ')+"\n";
+  }
+  // DEBUG
+  // console.error(p);
+  // Create DockerFile (stdout)
+  var cont = Mustache.render(tcont, p);
+  console.log(cont);
+}
+
 
 function usage(msg) {
   if (msg) { console.error(msg); }
-  console.error("Usage: "+process.argv[1] + " my_image_001.conf.json");
+  var cmd = path.basename(process.argv[1]);
+  console.error("Usage: "+cmd + " op my_image_001.conf.json\nAvailable ops:");
+  Object.keys(ops).forEach(function (k) { console.error(" - "+ k); });
   process.exit(1);
 }
 /** Initialize a few good default setting (to params in p) */
