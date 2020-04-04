@@ -55,7 +55,7 @@ extpkg_inst(p);
 pkg_makelinks(p);
 if (p.env) {
   p.envcont = "";
-  Object.keys(p.env).forEach(function (k) { p.envcont = "ENV "+ k + "="+p.env[k] + "\n";});
+  Object.keys(p.env).forEach(function (k) { p.envcont += "ENV "+ k + "="+p.env[k] + "\n";});
 }
 // DEBUG
 // console.error(p);
