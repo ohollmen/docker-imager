@@ -10,7 +10,7 @@
     "jsdoc": "3.5.5"
   },
   "scripts": {
-    "test": "./dfgen.js ubu18_example.conf.json",
+    "test": "./dfgen.js gen ubu18_example.conf.json",
     "none": "",
     "doc":"./node_modules/.bin/jsdoc dfgen.js -c ./.jsdoc.conf.json"
   },
