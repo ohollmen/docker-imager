@@ -12,7 +12,7 @@
   "scripts": {
     "test": "./dfgen.js gen ubu18_example.conf.json",
     "none": "",
-    "doc":"./node_modules/.bin/jsdoc dfgen.js -c ./.jsdoc.conf.json"
+    "doc":"./node_modules/.bin/jsdoc dfgen.js docker-imager.js -c ./.jsdoc.conf.json"
   },
   "repository": {
     "type": "git",
