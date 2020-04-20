@@ -1,6 +1,8 @@
 /**
 * @file
 * # Docker Imager
+* 
+* JS Class for creating Docker files (or running docker) to embed into applications.
 */
 
 /* Low level notes on JS OO/prototype refactor and refactoring procedural code
@@ -21,20 +23,16 @@ var path  = require("path");
 /** Instantiate a docker imager by the config passed.
  * Later called methods will operate on this data.
  * This merely copies the config to be instance data.
+ * @constructor
  */
 function DockerImager(p, opts) {
   //console.log("Const-TOP-this: ",this);
-  
-  
   // For now copy props
   //console.log(this);
   for (var k in p) {
     //console.log("Key:"+k);
     this[k] = p[k];
   }
-  //this["foo"] = 1;
-  //console.log(this);
-  //this.init(); // TEST
 }
 /** Generate Dockerfile based on it's configuration.
  * Runs through all the generative steps using docker-image object internal config
@@ -92,7 +90,6 @@ DockerImager.prototype.init = function() {
  * Install a bunch of custom third party packages not available through distributions
  * normal repos (These you'd edxpress in ).
 * Add generated Dockerfile content to extpkgs node parameters (member "cont").
-* @param p {object} - Image parameters
 * @todo Document details of various accepted extpkg types: .tgz
 * Note:
 */
@@ -159,7 +156,7 @@ DockerImager.prototype.extpkg_inst = function() {
 * - config.ppl - "packages per line" to neatly distribute the large
 *   package lists onto multiple lines.
 * Places content for templating to "pl" (for "package list").
-* @param p {object} - Docker config data
+* 
 * @return Nothing.
 */
 DockerImager.prototype.pkg_listgen = function() {
@@ -188,7 +185,7 @@ DockerImager.prototype.pkg_listgen = function() {
 
 /** Make symlinks described in "links" section of config.
 * Place generated RUN-commands into "linkcont" section of config object.
-* @param p {object} - Docker config data
+* 
 * @return Nothing.
 */
 DockerImager.prototype.pkg_makelinks = function() {
@@ -206,7 +203,7 @@ DockerImager.prototype.pkg_makelinks = function() {
 * Docker directives are generated to member "mkdircont"
 * As this *only* generated commands for template, it's templates responsibility
 * to expand the "mkdircont" early in the template.
-* @param p {object} - Docker config data
+* 
 * @return Nothing.
 */
 DockerImager.prototype.pkg_mkdirs = function() {
@@ -225,7 +222,7 @@ DockerImager.prototype.pkg_mkdirs = function() {
  * e.g. it might depend on certain volume mounts that this "simple run" cannot
  * predict / know about.
  */
-DockerImager.prototype.run_container = function(p) {
+DockerImager.prototype.run_container = function() {
   // Use templating ?
   var runcmd = "docker run -i -t ";
 }
