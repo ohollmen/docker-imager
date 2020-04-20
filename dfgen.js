@@ -30,25 +30,16 @@
 
 
 "use strict;";
-//var Mustache = require("mustache");
-//var fs    = require("fs");
-//var cproc = require("child_process");
-//var path  = require("path");
+var path  = require("path"); // for basename()
 var dockimg = require("./docker-imager");
 //////////////////////////////////////
-
-// extpkg temp dir inside the image.
-//var pkgtemp = "/tmp";
-
-// var op = process.argv
-
 var ops = {"gen": function (p) { p.generate(); }, "help": usage };
 var op = process.argv.splice(2,1).toString();
 if (!op) { usage("No op. passed\n"); }
 // console.log("OP:" + op);
 if (!ops[op]) { usage("'"+op+"' - No such op.\n"); }
 
-var cfgname = process.argv[2];
+var cfgname = process.argv[2]; // Always Fixed arg after subcmd ?
 
 if (!cfgname) { usage("Need config file as first param !"); }
 var p = dockimg.require_json(cfgname);
@@ -62,8 +53,13 @@ p2.init();
 ops[op](p2);
 process.exit(0);
 
+/** Output usage instructions.
+ * Allow printing a error context specific message to the beginning of usage info.
+ * Everyting is output to stderr.
+ */
 function usage(msg) {
   if (msg) { console.error(msg); }
+  // TODO: 
   var cmd = path.basename(process.argv[1]);
   console.error("Usage: "+cmd + " op my_image_001.conf.json\nAvailable ops:\n");
   Object.keys(ops).forEach(function (k) { console.error(" - "+ k); });
