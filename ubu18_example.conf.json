@@ -1,7 +1,7 @@
 {
   "author":"Olli Hollmen",
   "desc":  "Ubuntu 18 Simple Example",
-  "plist": ["wget"],
+  "plist": ["wget", "locales"],
   "baseimage": "ubuntu:18.04",
   "image": "ubu18_simple",
   "dockerfname": "Dockerfile.ubu",
@@ -10,7 +10,7 @@
   "vertag": "0.0.1",
   "pkgtype":"deb",
   "extpkgs": [
-    {"url":"http://pkgrepo:8000/some.deb", "path": "/tmp"}
+    {"disa":1, "url":"http://pkgrepo:8000/some.deb", "path": "/tmp"}
   ],
   "mkdir": [],
   "links": [],
