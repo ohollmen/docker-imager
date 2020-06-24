@@ -210,7 +210,7 @@ DockerImager.prototype.pkg_makelinks = function() {
     // p.linkcont += "RUN " + lcmd;
     return lcmd;
   });
-  p.linkcont = "RUN " + linkcmds.join(" && ");
+  p.linkcont = linkcmds.length ? "RUN " + linkcmds.join(" && ") : "";
 };
 /** Create directories (fairly early) in the processing.
 * Docker directives are generated to member "mkdircont"
