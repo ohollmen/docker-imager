@@ -25,15 +25,20 @@
 * ## TODO
 * 
 * - Move to Handlebars for comparison in tmpl ? Does not help much.
-* - Use sub commands (to trigger building, testing ...). Good move.
+* - DONE: Use sub commands (to trigger building, testing ...).
 */
 
 
 "use strict;";
 var path  = require("path"); // for basename()
+var fs    = require("fs"); // for readFileSync(0)
 var dockimg = require("./docker-imager");
 //////////////////////////////////////
-var ops = {"gen": function (p) { p.generate(); }, "help": usage };
+var ops = {
+  "gen": function (p) { p.generate(); },
+  "help": usage,
+  "genconf": genconf
+};
 var op = process.argv.splice(2,1).toString();
 if (!op) { usage("No op. passed\n"); }
 // console.log("OP:" + op);
@@ -42,7 +47,9 @@ if (!ops[op]) { usage("'"+op+"' - No such op.\n"); }
 var cfgname = process.argv[2]; // Always Fixed arg after subcmd ?
 
 if (!cfgname) { usage("Need config file as first param !"); }
-var p = dockimg.require_json(cfgname);
+var p = {};
+if (op == 'genconf') { ops[op](p); process.exit(0); } // Early dsipatch w/o inst.
+p = dockimg.require_json(cfgname);
 if (!p) { usage("JSON Config loading failed !"); }
 //console.log(p);
 p2 = new dockimg.DockerImager(p);
@@ -64,4 +71,21 @@ function usage(msg) {
   console.error("Usage: "+cmd + " op my_image_001.conf.json\nAvailable ops:\n");
   Object.keys(ops).forEach(function (k) { console.error(" - "+ k); });
   process.exit(1);
+}
+/** Generate config.
+ * Rely on slim meta info on JSON conf file members.
+ * https://stackoverflow.com/questions/20086849/how-to-read-from-stdin-line-by-line-in-node
+ */
+function genconf() {
+  console.log("TODO: Write to " + cfgname);
+  var arr = [
+    {"name": "Author Name", type: "s", val: ""},
+    {"name": "Author Name", type: "s", val: ""}
+  ];
+  var conf = {};
+  arr.forEach(function (it) {
+    process.stdout.write(it.name + ": ");
+    var stdinbuf = fs.readFileSync(0);
+    console.log("'"+stdinbuf+"'");
+  });
 }
