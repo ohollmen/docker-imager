@@ -64,12 +64,10 @@ Install docker-imager utility:
     # For ease of use, create a symlink to dfgen.js
     ln -s docker-imager/dfgen.js dfgen.js
     
-At this point (of the tool evolution) the config file is the only CL parameter. The whole Dockerfile generation process is driven by it.
+Pass the config file is the only CL parameter. The whole Dockerfile generation process is driven by it.
 
-    # Add current dir in path (to resolve .json file loading correctly)
-    export NODE_PATH=.
-    # Pass JSON config file
-    ./dfgen.js myimage.conf.json
+    # Generate, Pass JSON config file
+    ./dfgen.js gen myimage.conf.json
 
 # Config members in JSON
 
@@ -109,6 +107,11 @@ Additional info:
 
 # `extpkgs` - Section
 
+Items (Array of Objects) in extpkgs desccribe usual third party SW packages (in rpm, .deb and tar.gz formats)
+that need to be installed onto docker. The implementation also works around docker shorcomings in supporting
+"ftp://..." URL scheme (The workaround is implemented by having wget handle the download, be sure to have
+wget installed into your container).
+
 # TODO
 
 - Explain in which order the operations described in config are performed and how template has a crucial role on this
@@ -122,6 +125,7 @@ that is considered to be the base path relative to which all library and JSON lo
 To overcome this nastily unintuitive quirk, set `export NODE_PATH=.` to (also) load libs relative to current libs (e.g. docker-imager config files).
 
 # References
+
 - https://software.opensuse.org/package/
 - https://unix.stackexchange.com/questions/82016/how-to-use-zypper-in-bash-scripts-for-someone-coming-from-apt-get
 - https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image Preventing interactivity and hang on docker build apt install
