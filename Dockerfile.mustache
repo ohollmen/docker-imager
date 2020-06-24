@@ -1,7 +1,7 @@
-# Build by: docker build --rm=true -t '{{ image }}:{{ vertag }}' -f {{ dockerfname }} .
-# (last: contextdir/)
-# Run by: docker run --rm=true -i -t '{{ image }}:{{ vertag }}' bash
-# Remember to create local and remote tags (before push to {{{ remote }}}/{{ image }}:{{ vertag }} )
+# Build by:   docker build --rm=true -t '{{ image }}:{{ vertag }}' -f {{ dockerfname }} .
+# Run by:     docker run --rm=true -i -t '{{ image }}:{{ vertag }}' bash
+# Rem-tag by: docker tag {{ image }}:{{ vertag }} {{{ remote }}}/{{ image }}:{{ vertag }}
+# Push by:    docker push {{{ remote }}}/{{ image }}:{{ vertag }}
 # Use -d for backgrounding (daemon). -P for publish
 FROM {{{ baseimage }}}
 LABEL maintainer="{{{ author }}}" description="{{{ desc }}}"
@@ -20,7 +20,7 @@ RUN yum update -y && yum install -y {{ pl }}
 RUN zypper -n --gpg-auto-import-keys install  {{ pl }}
 {{/_uses_zyp}}
 # ENV MYUTIL_VER=1.0
-# External / Thisrd party raw packages ?
+# External / Third party raw packages ?
 {{#extpkgs}}
 # {{{ url }}}
 {{{ cont }}}
@@ -38,7 +38,7 @@ RUN yum install -y devtoolset-3
 # Env. Additions ?
 {{{ envcont }}}
 {{#_uses_deb}}
-# Ubuntu/Debian hacks for locales
+# Ubuntu/Debian hacks for locales. Note: requires apt package "locales" (!)
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
 # en_US.UTF-8 not needed ? Or above not needed if passed ?
 # Interactive alt to this woule be `dpkg-reconfigure locales`
