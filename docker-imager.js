@@ -2,7 +2,17 @@
 * @file
 * # Docker Imager
 * 
-* JS Class for creating Docker files (or running docker) to embed into applications.
+* JS Class for creating Docker files (or running docker).
+* Class can be easily embed into applications (e.g.):
+* 
+*    var dockimg = require("docker-imager");
+*    var fs      = require("fs");
+*    var cfg = dockimg.require_json("ubu18.imgconf.json");
+*    // Instantiate, initialize, generate, write results to Dockerfile.
+*    var di = new dockimg.DockerImager(cfg);
+*    di.init();
+*    var cont = di.generate();
+*    fs.writeFileSync("Dockerfile", cont, 'utf8');
 */
 
 /* Low level notes on JS OO/prototype refactor and refactoring procedural code
@@ -63,7 +73,7 @@ DockerImager.prototype.generate = function (opts) {
   //}
   //else if (opts.save) { } // 
   return cont;
-}
+};
 
 DockerImager.pkgtemp = "/tmp";
 
@@ -84,7 +94,7 @@ DockerImager.prototype.init = function() {
   if (!dft) { throw "No template file given in config 'tmplfname' !"; }
   // Check exists ?
   p.tcont = fs.readFileSync(dft, 'utf8');
-}
+};
 
 /** Process "extpkgs" section of config.
  * Install a bunch of custom third party packages not available through distributions
@@ -148,7 +158,7 @@ DockerImager.prototype.extpkg_inst = function() {
     //  console.log("Downloaded " + p + " to " + dest);
     //});
   });
-}
+};
 
 /** Load Package list gotten from JSON main config.
 * Uses members from config (param p):
@@ -181,7 +191,7 @@ DockerImager.prototype.pkg_listgen = function() {
   }
   p.pl = cont.replace(/\\\s+$/, '');
   // return p.pl;
-}
+};
 
 /** Make symlinks described in "links" section of config.
 * Place generated RUN-commands into "linkcont" section of config object.
@@ -193,12 +203,15 @@ DockerImager.prototype.pkg_makelinks = function() {
   p.linkcont = "";
   if (!p.links) {  console.error("No links to create"); return; }
   if (!Array.isArray(p.links)) { console.error("Links defs not in array"); return;  }
-  p.links.forEach(function (it) {
-    var lcmd = "ln -s "+ it[0] + " " + it[1]+ "\n";
+  // p.linkcont = "RUN ";
+  var linkcmds = p.links.map(function (it) { // forEach
+    var lcmd = "ln -s "+ it[0] + " " + it[1]; // + "\n"
     // console.error("DEBUG: "+lcmd);
-    p.linkcont += "RUN " + lcmd;
+    // p.linkcont += "RUN " + lcmd;
+    return lcmd;
   });
-}
+  p.linkcont = "RUN " + linkcmds.join(" && ");
+};
 /** Create directories (fairly early) in the processing.
 * Docker directives are generated to member "mkdircont"
 * As this *only* generated commands for template, it's templates responsibility
@@ -216,7 +229,7 @@ DockerImager.prototype.pkg_mkdirs = function() {
     p.mkdircont += " "+it;
   });
   p.mkdircont += "\n";
-}
+};
 /** Run container in simple way based on known config.
  * Note: config may not "know everything" about how container should be run,
  * e.g. it might depend on certain volume mounts that this "simple run" cannot
@@ -225,7 +238,7 @@ DockerImager.prototype.pkg_mkdirs = function() {
 DockerImager.prototype.run_container = function() {
   // Use templating ?
   var runcmd = "docker run -i -t ";
-}
+};
 /** Wrapper for loading JSON w/o path resolution quirks.
 * require() loads JSON, but with unintuitive twists regarding symlinks
 * to executable or location of executable in general vs.
