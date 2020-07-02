@@ -35,24 +35,30 @@ var fs    = require("fs"); // for readFileSync(0)
 var dockimg = require("./docker-imager");
 //////////////////////////////////////
 var ops = {
-  "gen": function (p) { p.generate(); },
+  "gen": function (p) { p.generate(); console.error("# To save append: ... > "+p.dockerfname);},
   "help": usage,
-  "genconf": genconf
+  "genconf": genconf,
+  "list": list
 };
 var op = process.argv.splice(2,1).toString();
 if (!op) { usage("No op. passed\n"); }
 // console.log("OP:" + op);
 if (!ops[op]) { usage("'"+op+"' - No such op.\n"); }
 
-var cfgname = process.argv[2]; // Always Fixed arg after subcmd ?
+var cfgname = process.argv[2]; // Always Fixed arg after subcmd (?)
+var cfgpaths = ["./conf", "."];
+
+var p = {};
+// Ops with early dispatch, w/o instance
+if (op == 'genconf') { ops[op](p); process.exit(0); }
+if (op == 'list')    { ops[op](p); process.exit(0); }
 
 if (!cfgname) { usage("Need config file as first param !"); }
-var p = {};
-if (op == 'genconf') { ops[op](p); process.exit(0); } // Early dsipatch w/o inst.
+if (cfgname.indexOf("/") == -1) { cfgname = dockimg.confresolve(cfgpaths, cfgname); }
 p = dockimg.require_json(cfgname);
 if (!p) { usage("JSON Config loading failed !"); }
 //console.log(p);
-p2 = new dockimg.DockerImager(p);
+var p2 = new dockimg.DockerImager(p);
 if (!p2) { throw "No DockerImager instance"; }
 // if (!p.tcont) { usage("No template content loaded from: '"+dft+"'"); }
 p2.init();
@@ -71,6 +77,29 @@ function usage(msg) {
   console.error("Usage: "+cmd + " op my_image_001.conf.json\nAvailable ops:\n");
   Object.keys(ops).forEach(function (k) { console.error(" - "+ k); });
   process.exit(1);
+}
+function list() {
+  var arr = [];
+  var cpath = process.env["DOCKER_IMAGER_PATH"];
+  var cpaths = cpath ? cpath.split(':') : [];
+  cpaths = cpaths.filter(function (p) { return fs.existsSync(p); });
+  if (cpaths.length) { cfgpaths.unshift(...cpaths); }
+  cfgpaths.forEach(function (p) {
+    var l;
+    
+    try { l = fs.readdirSync(p, {encoding: 'utf8'}); } // withFileTypes
+    catch (ex) {
+      console.error("Warning: Path "+p+" does not exist.");
+      return;
+    }
+    var l2 = l.map(function (f) {return p+"/"+f;});
+    l2 = l2.filter(function (p) {  return p.match(/\.conf.json$/); });
+    arr.push(...l2); // concat
+  });
+  var cont = "Available config files (by suffix .conf.js):\n";
+  arr.forEach(function (it) { cont += "- "+it+"\n";});
+  cont += "\nPass one of these to: dfgen.js gen ...\n";
+  console.log(cont);
 }
 /** Generate config.
  * Rely on slim meta info on JSON conf file members.

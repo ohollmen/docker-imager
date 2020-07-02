@@ -19,15 +19,20 @@
  * (with central first-arg object) to OO/prototype code with an editor PCRE compatible RegExp.
  * Notes:
  * - \w+ as function name is slightly optimistic, but 99.999% applicable (does not require
- * symbol to start with number)
+ * symbol to start with number)f
  * 
  * Search: function\s+(\w+)\s*\((.+?)\)
  * Replace: DockerImager.prototype.\1 = function(\2)
  */
+ 
+// 'use esversion: 6';
+/*jshint esversion: 6 */
 var Mustache = require("mustache");
 var fs    = require("fs");
 var cproc = require("child_process");
 var path  = require("path");
+
+
 
 
 /** Instantiate a docker imager by the config passed.
@@ -44,6 +49,32 @@ function DockerImager(p, opts) {
     this[k] = p[k];
   }
 }
+
+DockerImager.pkgtemp = "/tmp";
+
+/** Initialize a few good default setting (to param properties in object).
+ * Default property "dockerfname" to "Dockerfile" if not given in 
+ * @return None
+ */
+DockerImager.prototype.init = function() {
+  var p = this;
+  var pkgtypes = ["rpm","deb","zyp"];
+  // helpers to use in template as mustache is lacking comparision (equality) operator.
+  pkgtypes.forEach(function (pt) {
+    if (p.pkgtype == pt) { p["_uses_"+pt] = true; }
+  });
+  // p.dockerfname = p.dockerfname || 'Dockerfile'; // See below
+  // Load template
+  var dft = p.tmplfname;
+  if (!dft) { throw "No template file given in config 'tmplfname' !"; }
+  // Check exists ?
+  p.tcont = fs.readFileSync(dft, 'utf8');
+  // Default the "dockerfname"
+  if (!p.dockerfname) { p.dockerfname = (p.image ? "Dockerfile."+ p.image : "Dockerfile"); }
+  // 
+};
+
+
 /** Generate Dockerfile based on it's configuration.
  * Runs through all the generative steps using docker-image object internal config
  * and generates a complete dockerfile as result based on template given by config.
@@ -73,27 +104,6 @@ DockerImager.prototype.generate = function (opts) {
   //}
   //else if (opts.save) { } // 
   return cont;
-};
-
-DockerImager.pkgtemp = "/tmp";
-
-/** Initialize a few good default setting (to param properties in object).
- * Default property "dockerfname" to "Dockerfile" if not given in 
- * @return None
- */
-DockerImager.prototype.init = function() {
-  var p = this;
-  var pkgtypes = ["rpm","deb","zyp"];
-  // helpers to use in template as mustache is lacking comparision (equality) operator.
-  pkgtypes.forEach(function (pt) {
-    if (p.pkgtype == pt) { p["_uses_"+pt] = true; }
-  });
-  p.dockerfname = p.dockerfname || 'Dockerfile';
-  // Load template
-  var dft = p.tmplfname;
-  if (!dft) { throw "No template file given in config 'tmplfname' !"; }
-  // Check exists ?
-  p.tcont = fs.readFileSync(dft, 'utf8');
 };
 
 /** Process "extpkgs" section of config.
@@ -235,9 +245,15 @@ DockerImager.prototype.pkg_mkdirs = function() {
  * e.g. it might depend on certain volume mounts that this "simple run" cannot
  * predict / know about.
  */
-DockerImager.prototype.run_container = function() {
+DockerImager.prototype.run_container = function(opts) {
+  opts = opts || {};
   // Use templating ?
-  var runcmd = "docker run -i -t ";
+  // Copy (merge) this and other params
+  var p = {image: this.image, vertag: this.vertag, cmd: (opts.cmd || 'bash')};
+  var runcmd = "docker run -i -t {{ image }}:{{ vertag }} bash";
+  var cont = Mustache.render(runcmd, this);
+  // Child process ?
+  
 };
 /** Wrapper for loading JSON w/o path resolution quirks.
 * require() loads JSON, but with unintuitive twists regarding symlinks
@@ -253,9 +269,30 @@ function require_json(fname) {
   var cont = fs.readFileSync(fname, 'utf8');
   return JSON.parse(cont);
 }
-
+/* Resolve the config file from multiple paths.
+* If Env. DOCKER_IMAGER_PATH is set (containing one or more ':' separated components,
+* add it to the beginning of paths to look the file from.
+* @param paths {array} - paths to look from.
+* @param cfname {string} - file basename (or relative name to append to paths passed in array)
+* Return first resolved path+filename where file was found in or null if file was not found.
+*/
+function confresolve(paths, cfname) {
+  paths = (paths && Array.isArray(paths)) ? paths : [];
+  var cpath = process.env["DOCKER_IMAGER_PATH"];
+  // Allow multiple ':'-separated
+  var cpaths = cpath ? cpath.split(':') : [];
+  cpaths = cpaths.filter(function (p) { return fs.existsSync(p); });
+  if (cpaths.length) { paths.unshift(...cpaths); }
+  console.error("Resolving from: ", paths);
+  var farr = paths.map(function (p) { return p+"/"+cfname; })
+    .filter(function (fullp) { return fs.existsSync(fullp); });
+  if (!farr[0]) { return null; }
+  if (farr.length > 1) { console.error("Warning: Config '"+cfname+"' found in multiple paths (possible ambiguity)"); }
+  return farr[0];
+}
 module.exports = {
   "require_json": require_json,
+  "confresolve":  confresolve,
   "DockerImager": DockerImager
 };
 

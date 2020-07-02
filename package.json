@@ -2,9 +2,10 @@
   "name": "docker-imager",
   "version": "1.0.0",
   "description": "Generate Dockerfiles based on JSON config.",
-  "main": "dfgen.js",
+  "main": "docker-imager.js",
   "dependencies": {
-    "mustache": "~3.0.1"
+    "mustache": "~3.0.1",
+    "node-getopt": "0.3.2"
   },
   "devDependencies": {
     "jsdoc": "3.5.5"
@@ -12,7 +13,8 @@
   "scripts": {
     "test": "./dfgen.js gen ubu18_example.conf.json",
     "none": "",
-    "doc":"./node_modules/.bin/jsdoc dfgen.js docker-imager.js -c ./.jsdoc.conf.json"
+    "doc":"./node_modules/.bin/jsdoc dfgen.js docker-imager.js -c ./.jsdoc.conf.json",
+    "githubinstall": "npm install "
   },
   "repository": {
     "type": "git",
