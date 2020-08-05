@@ -47,6 +47,10 @@ RUN update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 {{/_uses_deb}}
 # Use Addition (?) -G sudo
 # RUN useradd -c "The User" -d /home/1000 -m -s /bin/bash 1000
+# Run Commands
+{{#cmdrun}}
+{{.}}
+{{/cmdrun}}
 #USER {{ uidgid[0] }}:{{ uidgid[1] }}
 # Cwd for RUN, CMD, ENTRYPOINT, COPY and ADD (to follow)
 #WORKDIR /foo
