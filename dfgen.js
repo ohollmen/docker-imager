@@ -35,7 +35,7 @@ var fs    = require("fs"); // for readFileSync(0)
 var dockimg = require("./docker-imager");
 //////////////////////////////////////
 var ops = {
-  "gen": function (p) { p.generate(); console.error("# To save append: ... > "+p.dockerfname);},
+  "gen": generate,
   "help": usage,
   "genconf": genconf,
   "list": list
@@ -77,6 +77,20 @@ function usage(msg) {
   console.error("Usage: "+cmd + " op my_image_001.conf.json\nAvailable ops:\n");
   Object.keys(ops).forEach(function (k) { console.error(" - "+ k); });
   process.exit(1);
+}
+
+function generate (p) {
+  var cont = p.generate(); // {dump: 1}
+  if (!p.dockerfname) { console.error("Error: No dockerfname present !"); process.exit(1); }
+  // Save by contained name
+  if (process.argv.includes("--save")) {
+    var is = fs.existsSync( p.dockerfname );
+    if (is) {console.error("Warning: Overwriting "+p.dockerfname+" !"); }
+    fs.writeFileSync(p.dockerfname, cont, "utf8");
+    return;
+  }
+  console.log(cont);
+  console.error("# To save append: ... > "+p.dockerfname+ "\n# ... or use --save");
 }
 function list() {
   var arr = [];
