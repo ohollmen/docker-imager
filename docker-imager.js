@@ -102,9 +102,9 @@ DockerImager.prototype.generate = function (opts) {
   // Create DockerFile (stdout)
   if (!p.tcont) { throw "No Template available !"; }
   var cont = Mustache.render(p.tcont, p);
-  //if (opts.dump) {
+  if (opts.dump) {
     console.log(cont);
-  //}
+  }
   //else if (opts.save) { } // 
   return cont;
 };
