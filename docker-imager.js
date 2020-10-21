@@ -71,7 +71,8 @@ DockerImager.prototype.init = function() {
   p.tcont = fs.readFileSync(dft, 'utf8');
   // Default the "dockerfname"
   if (!p.dockerfname) { p.dockerfname = (p.image ? "Dockerfile."+ p.image : "Dockerfile"); }
-  // 
+  //
+  if (!p.cmdrun || !Array.isArray(p.cmdrun) ) { p.cmdrun = []; }
 };
 
 
@@ -94,14 +95,16 @@ DockerImager.prototype.generate = function (opts) {
     Object.keys(this.env).forEach(function (k) { earr.push(k + "="+p.env[k]); }); //  p.envcont += "ENV "+ k + "="+p.env[k] + "\n";
     p.envcont += earr.join(' ')+"\n";
   }
+  // NEW: cmdrun (Always array) - no need for action (except on template)
+  // if (this.cmdrun && Array.isArray(this.cmdrun)) {}
   // DEBUG
   // console.error(p);
   // Create DockerFile (stdout)
   if (!p.tcont) { throw "No Template available !"; }
   var cont = Mustache.render(p.tcont, p);
-  //if (opts.dump) {
+  if (opts.dump) {
     console.log(cont);
-  //}
+  }
   //else if (opts.save) { } // 
   return cont;
 };
