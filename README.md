@@ -32,6 +32,41 @@ Example JSON Config for generating a Dockerfile with docker-imager:
       "tmplfname": "./Dockerfile.mustache"
     }
 
+# Installation and Running
+
+Install (from git):
+```
+mkdir docker_build
+cd docker_build
+git clone https://github.com/ohollmen/docker-imager.git
+cd docker-image
+npm install
+```
+Create .json and generate Dockerfile:
+```
+# Create .json in structured per docker-imager
+# Eyball for sanity from STDOUT
+./docker-imager/dfgen.js gen centos7_compute.conf.json
+# Save ... (Saves into e.g. Dockerfile.centos7_compute, "Dockerfile." + whatever is in "image" member)
+./docker-imager/dfgen.js gen centos7_compute.conf.json --save
+# ... Dockerfile.centos7_compute created
+
+```
+Build image by following generated build
+```
+# View the commands
+head Dockerfile.centos7_compute
+# Launch commands one-by-one
+# Build ...
+docker build ...
+# Test ....
+docker run ...
+# Remote tag
+docker tag ...
+# Push to your local registry
+docker push ...
+```
+
 # Features
 
 `docker-imager` Enables:
@@ -125,6 +160,13 @@ wget installed into your container).
 It seems that Node.js resolves the path of executable on very low (non-abstract) level, for example symlink is resolved to "concrete file" executable and
 that is considered to be the base path relative to which all library and JSON loadings by Node.js require("...") function is done relative to.
 To overcome this nastily unintuitive quirk, set `export NODE_PATH=.` to (also) load libs relative to current libs (e.g. docker-imager config files).
+
+## About docker build, push and deploy
+
+The commands to build, remote-tag and push are embedded to generated Dockerfile by the
+default/example template. Authentication may be required by remote docker registry where
+image is being pushed to (pass remote registry root "url" - without any "scheme prefix" -
+as param to docker login). The credentials are stored permanently in ~/.docker/config.json.
 
 # References
 

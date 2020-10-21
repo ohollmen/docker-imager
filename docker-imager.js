@@ -182,14 +182,24 @@ DockerImager.prototype.extpkg_inst = function() {
 DockerImager.prototype.pkg_listgen = function() {
   var p = this;
   var pkgs = [];
+  if (p.plfname && (typeof p.plfname != 'string')) { throw "plfname not in a string !"; }
   if (!p.plfname) {
     // Embedded list of packages in Array
     if (p.plist && Array.isArray(p.plist)) { pkgs = p.plist; }
     else { onsole.error("Warning: Neither package list (JSON) file or config embedded pkg list were give (untypical) !"); return; }
   }
   // External (second level) JSON file
-  else {
+  else if (p.plfname.match(/\.json$/)) {
     pkgs = require_json(p.plfname);
+  }
+  else if (p.plfname.match(/\.txt/)) {
+    // TODO: Search from various dirs ?
+    if (!fs.existsSync(p.plfname)) { throw "Package list file "+p.plfname+" not found!"; }
+    let cont = fs.readFileSync(p.plfname, 'utf8');
+    if (!cont) { throw "Package list file "+p.plfname+" does not have content!"; }
+    var arr = cont.split(/\n/);
+    if (!arr || !arr.length) { throw "No lines found";}
+    pkgs = arr.map((l) => { var arec = l ? l.split(/\s+/) : []; return arec[0] ? arec[0] : null; }).filter((pi) => { return pi; });
   }
   // Package list
   var scnt = p.ppl || 10; // pkg items per line.
