@@ -189,7 +189,7 @@ DockerImager.prototype.pkg_listgen = function() {
   if (!p.plfname) {
     // Embedded list of packages in Array
     if (p.plist && Array.isArray(p.plist)) { pkgs = p.plist; }
-    else { onsole.error("Warning: Neither package list (JSON) file or config embedded pkg list were give (untypical) !"); return; }
+    else { console.error("Warning: Neither package list (JSON) file or config embedded pkg list were give (untypical) !"); return; }
   }
   // External (second level) JSON file
   else if (p.plfname.match(/\.json$/)) {

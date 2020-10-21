@@ -39,8 +39,12 @@ Install (from git):
 mkdir docker_build
 cd docker_build
 git clone https://github.com/ohollmen/docker-imager.git
-cd docker-image
+cd docker-imager
 npm install
+cd ..
+# For minor convenience create main executable symlink
+ln -s docker-imager/dfgen.js dfgen
+
 ```
 Create .json and generate Dockerfile:
 ```
