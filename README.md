@@ -129,7 +129,7 @@ Pass the config file is the only CL parameter. The whole Dockerfile generation p
 - OS software (and other) packages
   - **plist** - Packagelist as Array of OS package names for the OS docker image is
     being built for
-  - **plfname** - Package list filename for long package lists where maiintaining plist in JSON is no more practicat. This is (meant to be) mutually exclusive with plist. plfname is however overriden by (preferred ove) plist if both exist in config.
+  - **plfname** - Package list filename (*.json or *.txt) for long package lists where maintaining plist in JSON is no more practical. This is (meant to be) mutually exclusive with plist. plfname is however overriden by (preferred ove) plist if both exist in config.
   - **pkgtype** - Package *and* Package manager type (this affects commands used, do not use rpm for SUSE)
     - "deb" for Debian/Ubuntu
     - "rpm" for RHEL/Centos
@@ -143,6 +143,10 @@ Pass the config file is the only CL parameter. The whole Dockerfile generation p
 or symlink() system command
 
 Additional info:
+- How **plfname** (Package list filename) works in *.json and *.txt formats:
+  - JSON: File should be array of strings, with strings containing valid package names for the distro of docker image
+  - TXT: Line oriented text/ascii file should contain package names as first (whitespace delimited) token of a line - optionally followed
+    other information. The first token on line is extracted, the rest discarded. Having only package name on a line is fine.
 - The package list originated from plist or plfname is formatted into reasonable size lines with
   line continuum charaters at line ends so that Dockerfile remains in human readable form.
 - extpkgs, mkdir, symlink related custom ops are fully optional (as seen from simple example config)
