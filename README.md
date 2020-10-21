@@ -119,6 +119,8 @@ Pass the config file is the only CL parameter. The whole Dockerfile generation p
   - **vertag** - Version tag for image being created (e.g. `"1.0.1"`)
   - **dockerfname** - Dockerfile custom naming (e.g. `"Dockerfile.ubu18"`. defaults plainly to "Dockerfile."+image) in case Dockerfiles for multiple images are created in same directory.
   - **remote** - Remote repository server URL (with optional sub-path components, but *no* image name components) for image push (e.g. "dockerimages.mycom.com/webservimg/")
+  - **tmplfname** - Template (for "Mustache" templating engine) to use to generate Dockerfile. The default template (docker-image/Dockerfile.mustache)
+    goes pretty far, but when it hits it's limitations, create your own template (based on it/using it as an example)
 - Hints for docker runtime context
   - **uidgid** - Array of (2 items) uidnumber and gidnumber to run the image as
 - Meta information (options)
