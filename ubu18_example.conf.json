@@ -2,6 +2,7 @@
   "author":"Olli Hollmen",
   "desc":  "Ubuntu 18 Simple Example",
   "plist": ["wget", "locales"],
+  "plfname": "ubu18_pkglist.txt",
   "baseimage": "ubuntu:18.04",
   "image": "ubu18_simple",
   "dockerfname": "Dockerfile.ubu",

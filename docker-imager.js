@@ -189,19 +189,20 @@ DockerImager.prototype.pkg_listgen = function() {
   if (!p.plfname) {
     // Embedded list of packages in Array
     if (p.plist && Array.isArray(p.plist)) { pkgs = p.plist; }
-    else { console.error("Warning: Neither package list (JSON) file or config embedded pkg list were give (untypical) !"); return; }
+    else { console.error("Warning: Neither package list (JSON or txt) file or config embedded pkg list were given (untypical) !"); return; }
   }
   // External (second level) JSON file
   else if (p.plfname.match(/\.json$/)) {
     pkgs = require_json(p.plfname);
   }
-  else if (p.plfname.match(/\.txt/)) {
+  else if (p.plfname.match(/\.txt$/)) {
     // TODO: Search from various dirs ?
     if (!fs.existsSync(p.plfname)) { throw "Package list file "+p.plfname+" not found!"; }
     let cont = fs.readFileSync(p.plfname, 'utf8');
     if (!cont) { throw "Package list file "+p.plfname+" does not have content!"; }
     var arr = cont.split(/\n/);
     if (!arr || !arr.length) { throw "No lines found";}
+    arr = arr.filter((line) => { return (line.match(/^#/) || line.match(/^\s*$/) || !line) ? 0 : 1 ; });
     pkgs = arr.map((l) => { var arec = l ? l.split(/\s+/) : []; return arec[0] ? arec[0] : null; }).filter((pi) => { return pi; });
   }
   // Package list
