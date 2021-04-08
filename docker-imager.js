@@ -198,12 +198,13 @@ DockerImager.prototype.pkg_listgen = function() {
   else if (p.plfname.match(/\.txt$/)) {
     // TODO: Search from various dirs ?
     if (!fs.existsSync(p.plfname)) { throw "Package list file "+p.plfname+" not found!"; }
-    let cont = fs.readFileSync(p.plfname, 'utf8');
-    if (!cont) { throw "Package list file "+p.plfname+" does not have content!"; }
-    var arr = cont.split(/\n/);
-    if (!arr || !arr.length) { throw "No lines found";}
-    arr = arr.filter((line) => { return (line.match(/^#/) || line.match(/^\s*$/) || !line) ? 0 : 1 ; });
-    pkgs = arr.map((l) => { var arec = l ? l.split(/\s+/) : []; return arec[0] ? arec[0] : null; }).filter((pi) => { return pi; });
+    try { pkgs = pkgs_from_txt(p.plfname); } catch(ex) { throw "pkg_listgen: Error getting packages from .txt: "+ ex; }
+    //let cont = fs.readFileSync(p.plfname, 'utf8');
+    //if (!cont) { throw "Package list file "+p.plfname+" does not have content!"; }
+    //var arr = cont.split(/\n/);
+    //if (!arr || !arr.length) { throw "No lines found";}
+    //arr = arr.filter((line) => { return (line.match(/^#/) || line.match(/^\s*$/) || !line) ? 0 : 1 ; });
+    //pkgs = arr.map((l) => { var arec = l ? l.split(/\s+/) : []; return arec[0] ? arec[0] : null; }).filter((pi) => { return pi; });
   }
   // Package list
   var scnt = p.ppl || 10; // pkg items per line.
@@ -248,7 +249,7 @@ DockerImager.prototype.pkg_mkdirs = function() {
   p.mkdircont = "";
   if (!p.mkdir) {  console.error("No dirs to create"); return; }
   if (!p.mkdir.length) { return; }
-  p.mkdircont += "RUN mkdir";
+  p.mkdircont += "RUN mkdir -p ";
   p.mkdir.forEach(function (it) {
     p.mkdircont += " "+it;
   });
@@ -304,9 +305,28 @@ function confresolve(paths, cfname) {
   if (farr.length > 1) { console.error("Warning: Config '"+cfname+"' found in multiple paths (possible ambiguity)"); }
   return farr[0];
 }
+/** Load OS Package file names from a text file.
+* First whitespace delimited token on line is considered as package name.
+* Empty lines and lines commented by '#' are skipped.
+* @param fname - Filename for package.
+* @return Array of pakage names
+*/
+function pkgs_from_txt(fname) {
+  // TODO: Search from various dirs ?
+  if (!fs.existsSync(fname)) { throw "Package list file "+fname+" not found!"; }
+  let cont = fs.readFileSync(fname, 'utf8');
+  if (!cont) { throw "Package list file "+fname+" does not have content!"; }
+  var arr = cont.split(/\n/);
+  if (!arr || !arr.length) { throw "No lines found";}
+  arr = arr.filter((line) => { return (line.match(/^#/) || line.match(/^\s*$/) || !line) ? 0 : 1 ; });
+  var pkgs = arr.map((l) => { var arec = l ? l.split(/\s+/) : []; return arec[0] ? arec[0] : null; }).filter((pi) => { return pi; });
+  return pkgs;
+}
+
 module.exports = {
   "require_json": require_json,
   "confresolve":  confresolve,
+  pkgs_from_txt: pkgs_from_txt,
   "DockerImager": DockerImager
 };
 
