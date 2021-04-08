@@ -141,6 +141,8 @@ Pass the config file is the only CL parameter. The whole Dockerfile generation p
   - **mkdir** - List of directory names to be created inside docker image
   - **links** - an Array of 2-path-string arrays where 2-path-string arrays contain the source and destination of symlink in same order as `ln -s ..` shell command 
 or symlink() system command
+- Arbitrary commands to run
+  - **cmdrun** - List (Array) of commands to run (completely unaltered, untransformed, passed directly to default template)
 
 Additional info:
 - How **plfname** (Package list filename) works in *.json and *.txt formats:
