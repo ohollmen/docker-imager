@@ -128,6 +128,7 @@ DockerImager.prototype.extpkg_inst = function() {
     var dest = DockerImager.pkgtemp + "/" + bn; // Default ...
     // Base command for wget download
     var cmd = "wget " + p.url + " -O " + dest;
+    var m; // Optional match
     // console.log("# " + cmd);
     //OLD:p.cont += "COPY " + dest + " /tmp/" + bn + "\n";
     //  Copy by ADD or
@@ -139,6 +140,14 @@ DockerImager.prototype.extpkg_inst = function() {
       //if ( ! haveit) { console.log("First run:'" + cmd + "' Then re-run this."); process.exit(1); }
       //p.cont += "ADD "+ dest + " "+ dest+ "\n";
       p.cont += "RUN wget "+ p.url + " -O "+ dest + "\n";
+    }
+    // file://... URL
+    if (m = p.url.match(/^file:\/\/(\S+)/)) {
+      var src = m[1];
+      // To "raw" dest in p.dest
+      if (p.direct) { p.cont += "COPY "+src+" "+p.path+"\n"; return; }
+      //if (p.direct) { p.cont += "ADD "+p.url+" "+p.path+"\n"; return; }
+      else { } // to high-level dest
     }
     // ADD ( ~ COPY) also Handles any http:// or https:// (NOT ftp://, see above)
     else { p.cont += "ADD " + p.url + " /tmp/" + bn + "\n"; } // TODO: Use dest ?
