@@ -73,6 +73,8 @@ DockerImager.prototype.init = function() {
   if (!p.dockerfname) { p.dockerfname = (p.image ? "Dockerfile."+ p.image : "Dockerfile"); }
   //
   if (!p.cmdrun || !Array.isArray(p.cmdrun) ) { p.cmdrun = []; }
+  if (!p.fgnplist || !Array.isArray(p.fgnplist) ) { p.fgnplist = []; }
+  if (process.env.DOCKER_IMAGER_REGISTRY) { p.remote = process.env.DOCKER_IMAGER_REGISTRY; }
 };
 
 
