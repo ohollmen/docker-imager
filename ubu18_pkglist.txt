@@ -2,5 +2,4 @@ wget
 locales
 build-essential
 #clang
-
-
+python
