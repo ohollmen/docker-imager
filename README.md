@@ -6,21 +6,33 @@ oriented no-sql database, where recipes could be queried, compared, extracted st
 
 Extracting this info from Dockerfile (by parsing it) would be tedious.
 
-Also the OS packagelist gets often so long that it would be hard screening list for duplicates, etc.
-Having everything in JSON would allow you programmatically detecting packagelist duplicate items, transfer info from JSON to no-sql database, etc.
+## Maintaining Packages in Docker Recipes (Dockerfile vs. docker-imager JSON)
+
+Also one of the main chores of docker image creation - selecting and maintaining (OS) package lists (that the app inside docker uses) in Dockerfile - is optimized by:
+- Keeping package list in "normalized" easy-to-parse form (.txt, JSON)
+- (Based on the above) ... Allowing you to programmatically scan, analyze, diff (etc.) the package lists
+- allowing configurations to share the same package list
+- (TODO) allow you to compose final package list from multiple sub-package
+  lists by boolean operations (diff, union, intersect)
+
+
+In Dockerfile the dependency package install command (not a normalized packagelist) gets often so long that it would be hard screening list for duplicates, etc.
+Having everything in JSON or plain text allows you programmatically detecting packagelist duplicate items, transfer info from JSON to no-sql database, etc.
 
 Dockerfile generator also optimizes the Dockerfile output to produce minimum amount of layers and
 example template file gives a good hint on the suggested order of operations to again optimize
 docker layer reuse.
 
+## Image Config File
+
 Example JSON Config for generating a Dockerfile with docker-imager:
 
     {
       "author":"Olli Hollmen",
-      "desc":  "Ubuntu 18 Slim Image relying on smart host volume mounts (e.g. /usr on host)",
+      "desc":  "HyperWeb App Suite on Ubuntu 18",
       "plist": ["wget"],
       "baseimage": "ubuntu:18.04",
-      "image": "ubu18_slim",
+      "image": "ubu18_hyperweb",
       "dockerfname": "Dockerfile.ubu",
       "remote": "images.artifactory.mycorp.com/web-team/",
       "uidgid": [1021, 1021],
@@ -32,24 +44,35 @@ Example JSON Config for generating a Dockerfile with docker-imager:
       "tmplfname": "./Dockerfile.mustache"
     }
 
-# Installation and Running
+Dockerfile is generated from this config using templating.
+
+## Installing docker-imager
 
 Install (from git):
 ```
+# Your "Docker Builds" work direcrectory
 mkdir docker_build
 cd docker_build
 git clone https://github.com/ohollmen/docker-imager.git
 cd docker-imager
+# Install (the very low) dependencies of docker-imager.
 npm install
 cd ..
 # For minor convenience create main executable symlink
+# (In the example we drop the ".js" suffix).
 ln -s docker-imager/dfgen.js dfgen
-
+# ... Or just keep the .js suffix
+# ln -s docker-imager/dfgen.js dfgen.js
 ```
-Create .json and generate Dockerfile:
+
+## Running dfgen.js (Dockerfile Generator)
+
+Create .json config (in the example `centos7_compute.conf.json`)
+and generate Dockerfile based on it:
 ```
 # Create .json in structured per docker-imager
-# Eyball for sanity from STDOUT
+# Run dfgen.js subcommand "gen" to generate Dockerfile
+# Eyball STDOUT for sanity (should be a valid Dockerfile)
 ./docker-imager/dfgen.js gen centos7_compute.conf.json
 # Save ... (Saves into e.g. Dockerfile.centos7_compute, "Dockerfile." + whatever is in "image" member)
 ./docker-imager/dfgen.js gen centos7_compute.conf.json --save
@@ -58,20 +81,26 @@ Create .json and generate Dockerfile:
 ```
 Build image by following generated build
 ```
-# View the commands
-head Dockerfile.centos7_compute
-# Launch commands one-by-one
+# View the generated "guiding" commands at the top of the file
+# (At least the "standard" template Dockerfile.mustache generates these)
+head -n 6 Dockerfile.centos7_compute
+# Launch commands (docker build, docker run, docker tag, ..) one-by-one
 # Build ...
 docker build ...
-# Test ....
-docker run ...
-# Remote tag
+# Test by running interactive shell (bash).
+# At this point (running in docker) you should test the various aspects
+# of the image: E.g. if you added package "jq", run "which jq" (should
+# see full path of executable), "jq --version", etc. to verify the
+# functionality.
+docker run ... bash
+# Remote tag (creates remote tag *locally*, no interaction with remote
+# registries).
 docker tag ...
-# Push to your local registry
+# Push to your chosen registry (See also notes about DOCKER\_IMAGER\_REGISTRY)
 docker push ...
 ```
 
-# Features
+## Features
 
 `docker-imager` Enables:
 
@@ -94,7 +123,7 @@ docker push ...
 - Does not support multi-image or service clustering features (use docker-compose for that)
 - Configure build context directory ('.' assumed for simplicity in generated commands)
 
-# Installing and Running CLI Utility
+## Setting up and Running CLI Utility
 
 Install docker-imager utility:
 
@@ -110,7 +139,7 @@ Pass the config file is the only CL parameter. The whole Dockerfile generation p
     # For demo use included example config
     ./dfgen.js gen ubu18_example.conf.json
 
-# Config members in JSON
+## Config members in JSON
 
 - Various names, versions
   - **baseimage** - baseimage name (as listed on on [dockerhub](https://hub.docker.com/) )
@@ -154,16 +183,22 @@ Additional info:
 - extpkgs, mkdir, symlink related custom ops are fully optional (as seen from simple example config)
 - OpenSUSE and `pkgtype=zyp` allow embedding full URL:s as package name item
 
-# `extpkgs` - Section
+## `extpkgs` - Section
 
 Items (Array of Objects) in extpkgs desccribe usual third party SW packages (in rpm, .deb and tar.gz formats)
 that need to be installed onto docker. The implementation also works around docker shorcomings in supporting
 "ftp://..." URL scheme (The workaround is implemented by having wget handle the download, be sure to have
 wget installed into your container).
 
+## Environment Variables
+
+- **DOCKER\_IMAGER\_PATH** - `docker-imager` config file path - a colon-separated list (list of directories, like UNIX `$PATH`)
+- **DOCKER\_IMAGER\_REGISTRY** - Docker registry to push images to, will be
+used to override `registry` value in config. Good to use when you use common registry for all your images (Note: the behavior may later change to "set value only if member registry does not exist" instead of "always override if env value is set).
+
 # TODO
 
-- Explain in which order the operations described in config are performed and how template has a crucial role on this
+- Explain in which order the operations described in config are performed and how template has a crucial role on this.
 
 # Special Notes
 

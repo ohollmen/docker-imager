@@ -38,7 +38,9 @@ var ops = {
   "gen": generate,
   "help": usage,
   "genconf": genconf,
-  "list": list
+  "list": list,
+  // New *instance* op: dump with package lists
+  "dump": jdump
 };
 var op = process.argv.splice(2,1).toString();
 if (!op) { usage("No op. passed\n"); }
@@ -113,6 +115,14 @@ function list() {
   var cont = "Available config files (by suffix .conf.js):\n";
   arr.forEach(function (it) { cont += "- "+it+"\n";});
   cont += "\nPass one of these to: dfgen.js gen ...\n";
+  console.log(cont);
+}
+/** Dump instance with package lists embedded
+* - Delete plfname to reduce ambiguity ?
+*/
+function jdump() {
+  delete(p.plfname); // Delete filename ?
+  var cont = JSON.stringify(p, null, 2);
   console.log(cont);
 }
 /** Generate config.

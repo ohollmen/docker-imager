@@ -309,7 +309,7 @@ function confresolve(paths, cfname) {
   var cpaths = cpath ? cpath.split(':') : [];
   cpaths = cpaths.filter(function (p) { return fs.existsSync(p); });
   if (cpaths.length) { paths.unshift(...cpaths); }
-  console.error("Resolving from: ", paths);
+  console.error("Resolving config from: ", paths);
   var farr = paths.map(function (p) { return p+"/"+cfname; })
     .filter(function (fullp) { return fs.existsSync(fullp); });
   if (!farr[0]) { return null; }
