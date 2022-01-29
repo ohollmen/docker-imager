@@ -112,10 +112,25 @@ DockerImager.prototype.generate = function (opts) {
 };
 
 /** Process "extpkgs" section of config.
- * Install a bunch of custom third party packages not available through distributions
- * normal repos (These you'd edxpress in ).
-* Add generated Dockerfile content to extpkgs node parameters (member "cont").
-* @todo Document details of various accepted extpkg types: .tgz
+ * Install your app binaries or (e.g.) a bunch of custom third party packages not available through distributions
+ * normal repos (These would be installed by using "plist" or "plfname").
+ * Add generated Dockerfile content to extpkgs node parameters (in member "cont").
+ * The processing here is divided into 2 phases:
+ * - fetching phase - file is fetched from source ("url") and place inside docker image (usually under /tmp)
+ * - file processing phase - file is processed based on it's type (suffix) and placed to it's destination ("path")
+ * 
+ * Special preocessing covers file types: rp, tar, tgz, tar.gz, .so
+ * and the fallback for files not matching these is plainly copying the file to destination ("path")
+ *
+ * # Source types and fetching phase
+ * - ftp:// - ftp URL, fetched by "RUN wget ftp://..." (copied initally to /tmp)
+ * - http:// - http URL fetched by "ADD http://..." (copied initally to /tmp)
+ * - file:// - filename extracted and ...
+ *   - with direct: 1 - copied directlry to final destination, any further processings skipped
+ *   - Note: using file:// - the files copied should be in (under) docker context directory.
+ *   - Suitable for adding small files stored under context directory
+ *   - Fetch big files using http://...
+ * @todo Document details of various accepted extpkg types: .tgz
 * Note:
 */
 DockerImager.prototype.extpkg_inst = function() {
@@ -144,12 +159,14 @@ DockerImager.prototype.extpkg_inst = function() {
       p.cont += "RUN wget "+ p.url + " -O "+ dest + "\n";
     }
     // file://... URL
-    if (m = p.url.match(/^file:\/\/(\S+)/)) {
+    // Fixed from "if" to "else if" - exclusive among ftp/file/http(?)
+    else if (m = p.url.match(/^file:\/\/(\S+)/)) {
       var src = m[1];
+      if (!src) { throw "Could not extract file URL source file"; }
       // To "raw" dest in p.dest
       if (p.direct) { p.cont += "COPY "+src+" "+p.path+"\n"; return; }
       //if (p.direct) { p.cont += "ADD "+p.url+" "+p.path+"\n"; return; }
-      else { } // to high-level dest
+      else { p.cont += "COPY "+src+" "+dest+"\n"; } // to high-level dest
     }
     // ADD ( ~ COPY) also Handles any http:// or https:// (NOT ftp://, see above)
     else { p.cont += "ADD " + p.url + " /tmp/" + bn + "\n"; } // TODO: Use dest ?
@@ -165,6 +182,7 @@ DockerImager.prototype.extpkg_inst = function() {
     else if (bn.match(/\.rpm$/)) { p.cont += "RUN rpm -ivh --force /tmp/" + bn + "\n"; }
     else if (bn.match(/\.tar$/)) { p.cont += "RUN tar -xf /tmp/" +bn + " -C "+p.path+"\n"; }
     else if (bn.match(/\.t?gz$/)) { p.cont += "RUN tar -zxf /tmp/" +bn + " -C "+p.path+"\n"; }
+    else if (bn.match(/\.zip$/)) { p.cont += "RUN cd "+p.path+" && unzip /tmp/" +bn + "\n"; }
     else if (bn.match(/\.so\b[\d\.]+$/)) {
       // console.error("GOT Shared object");
       if (!p.path) { console.error("*.so item does not have path !"); process.exit(1); }
