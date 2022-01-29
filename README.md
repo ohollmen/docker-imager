@@ -195,6 +195,7 @@ wget installed into your container).
 - **DOCKER\_IMAGER\_PATH** - `docker-imager` config file path - a colon-separated list (list of directories, like UNIX `$PATH`)
 - **DOCKER\_IMAGER\_REGISTRY** - Docker registry to push images to, will be
 used to override `registry` value in config. Good to use when you use common registry for all your images (Note: the behavior may later change to "set value only if member registry does not exist" instead of "always override if env value is set).
+- **DOCKER\_IMAGER\_DOCKERFILE\_PATH** - The destination path of Dockerfiles when saved with "gen" subcommand --save option
 
 # TODO
 

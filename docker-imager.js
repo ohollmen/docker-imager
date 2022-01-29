@@ -71,6 +71,11 @@ DockerImager.prototype.init = function() {
   p.tcont = fs.readFileSync(dft, 'utf8');
   // Default the "dockerfname"
   if (!p.dockerfname) { p.dockerfname = (p.image ? "Dockerfile."+ p.image : "Dockerfile"); }
+  // Additionally prefix a dockerfile destination dir
+  var dfpath;
+  if (dfpath = process.env["DOCKER_IMAGER_DOCKERFILE_PATH"]) {
+    p.dockerfname = dfpath+"/"+p.dockerfname;
+  }
   //
   if (!p.cmdrun || !Array.isArray(p.cmdrun) ) { p.cmdrun = []; }
   if (!p.fgnplist || !Array.isArray(p.fgnplist) ) { p.fgnplist = []; }
