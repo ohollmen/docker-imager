@@ -24,6 +24,8 @@ RUN apk add {{ pl }}
 {{/_uses_apk}}
 
 # ENV MYUTIL_VER=1.0
+## EARLY (see old below) !!!
+{{{ mkdircont }}}
 # External / Third party raw packages ?
 {{#extpkgs}}
 # {{{ url }}}
@@ -35,7 +37,7 @@ RUN apk add {{ pl }}
 ##### RUN yum install -y devtoolset-8
 {{/_uses_rpm }}
 # Create Dirs (RUN mkdir ...) ?
-{{{ mkdircont }}}
+##{{{ mkdircont }}}
 # Create symlinks (RUN ln -s ...) ?
 {{{ linkcont }}}
 
