@@ -194,7 +194,9 @@ wget installed into your container).
 
 - **DOCKER\_IMAGER\_PATH** - `docker-imager` config file path - a colon-separated list (list of directories, like UNIX `$PATH`)
 - **DOCKER\_IMAGER\_REGISTRY** - Docker registry to push images to, will be
-used to override `registry` value in config. Good to use when you use common registry for all your images (Note: the behavior may later change to "set value only if member registry does not exist" instead of "always override if env value is set).
+used to override `registry` value in config (that tends to repeat in
+docker-imager files of particular environment). Good to use when you use common registry for all your images
+(Note: the behavior may later change to "set value only if member registry does not exist" instead of "always override if env value is set).
 - **DOCKER\_IMAGER\_DOCKERFILE\_PATH** - The destination path of Dockerfiles when saved with "gen" subcommand --save option
 
 # TODO
@@ -203,7 +205,7 @@ used to override `registry` value in config. Good to use when you use common reg
 
 # Special Notes
 
-## Symlinks to main executable and NODE_PATH
+## Symlinks to main executable and NODE_PATH (within installation)
 
 It seems that Node.js resolves the path of executable on very low (non-abstract) level, for example symlink is resolved to "concrete file" executable and
 that is considered to be the base path relative to which all library and JSON loadings by Node.js require("...") function is done relative to.
@@ -215,6 +217,46 @@ The commands to build, remote-tag and push are embedded to generated Dockerfile 
 default/example template. Authentication may be required by remote docker registry where
 image is being pushed to (pass remote registry root "url" - without any "scheme prefix" -
 as param to docker login). The credentials are stored permanently in ~/.docker/config.json.
+
+## Large Files that have to be Added to images
+
+This note relates to small-to-medium environments where (many) docker-image configs are
+version controlled under single tree and old wisdom of not letting
+large (binary) files into the version control (large here could mean
+e.g. 45 MB or 1.5 GB in size).
+The large files stored in in a in/under docker-imager work (or config) directory would have following
+negative effects:
+
+- They would consume a lot of space in version control (esp. compared to
+  small-size configs or Dockerfiles)
+- They could be of changing nature further occupying more space in
+version control with every change.
+
+It's a good idea to keep this kind of files out of docker-imager
+version controlled work-area. Some ideas on where and how to store them:
+
+- Best: Place them under an established web server and web URL
+- Acceptable: Place them on an established network drive FS area and launch a
+small (e.g. python) web server to allow docker-imager / docker commands
+to have them available in a HTTP URL during docker build.
+
+An example scenario of this kind of flow for the "Acceptable" solution (above):
+
+- You have 1.2 GB SW shell archive installer on NFS area
+`/my/projs/sw/installer.sh`
+- You can launch `python -m SimpleHTTPServer` in *the* directory of
+files or in any upper directory of files
+- For this example. let's run a web server in the root ('/') of host
+`blob-box`.
+- Use a following URL in `extpkgs` section as source: "url":
+"http://blob-box/my/projs/sw/installer.sh", (see the filesystem path
+above) which will get you the correct file during build.
+
+Yes, this would be nice feature to have automated during build.
+If you can have your large-file content permanently under established
+web server, that is the "Best" option (to never have to start a temp
+web server, see above).
+
 
 # References
 
